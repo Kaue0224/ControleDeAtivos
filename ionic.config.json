@@ -1,0 +1,7 @@
+{
+  "name": "controle-ativos",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "vue-vite"
+}
