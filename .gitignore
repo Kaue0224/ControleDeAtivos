@@ -1,6 +1,7 @@
 # Specifies intentionally untracked files to ignore when using Git
 # http://git-scm.com/docs/gitignore
-
+/.vscode
+.gitignore
 *~
 *.sw[mnpcod]
 .tmp
@@ -36,3 +37,4 @@ npm-debug.log*
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+
