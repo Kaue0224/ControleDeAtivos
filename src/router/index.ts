@@ -13,6 +13,7 @@ const routes: RouteRecordRaw[] = [
     name: 'Home',
     component: HomePage,
   },
+  { path: '/detalhes', component: () => import('../views/DetalheControle.vue') },
 ];
 
 const router = createRouter({
