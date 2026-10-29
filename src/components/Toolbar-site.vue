@@ -1,7 +1,7 @@
 <template>
   <ion-page>
     <ion-header>
-      <ion-toolbar mode="ios">
+      <ion-toolbar color="light" mode="ios">
         <ion-title class="titulo">{{ titulo }}</ion-title>
 
         <div slot="end" class="direita">
