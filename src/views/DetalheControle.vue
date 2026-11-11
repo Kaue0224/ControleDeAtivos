@@ -5,7 +5,13 @@
         <span class="bolinha"></span>
         {{ ativo.status }}
       </span>
-      <ion-button fill="outline" size="small" class="btn-editar">Editar</ion-button>
+      <ion-button
+        fill="outline"
+        size="small"
+        class="btn-editar"
+        :router-link="`/ativos/${encodeURIComponent(String($route.params.id))}/editar`"
+        >Editar</ion-button
+      >
     </div>
 
     <div class="card-detalhes">
