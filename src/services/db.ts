@@ -24,6 +24,14 @@ CREATE TABLE IF NOT EXISTS ativos (
   localizacao  TEXT NOT NULL,
   status       TEXT NOT NULL CHECK (status IN ('Em uso', 'Manutenção', 'Baixado'))
 );
+
+CREATE TABLE IF NOT EXISTS colaboradores (
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  nome       TEXT NOT NULL,
+  matricula  TEXT NOT NULL UNIQUE COLLATE NOCASE,
+  email      TEXT NOT NULL DEFAULT '',
+  setor      TEXT NOT NULL
+);
 `;
 
 const naWeb = Capacitor.getPlatform() === 'web';

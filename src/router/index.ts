@@ -13,6 +13,21 @@ const routes: RouteRecordRaw[] = [
   { path: '/ativos/novo', name: 'NovoAtivo', component: () => import('../views/FormAtivo.vue') },
   { path: '/ativos/:id/editar', name: 'EditarAtivo', component: () => import('../views/FormAtivo.vue') },
   { path: '/ativos/:id', name: 'DetalheAtivo', component: () => import('../views/DetalheControle.vue') },
+
+  // Colaboradores — o :id é o código numérico do colaborador (ex.: /colaboradores/3).
+  // "/colaboradores/novo" precisa vir antes de "/colaboradores/:id".
+  { path: '/colaboradores', name: 'ListaColaboradores', component: () => import('../views/ListaColaboradores.vue') },
+  { path: '/colaboradores/novo', name: 'NovoColaborador', component: () => import('../views/FormColaborador.vue') },
+  {
+    path: '/colaboradores/:id(\\d+)/editar',
+    name: 'EditarColaborador',
+    component: () => import('../views/FormColaborador.vue'),
+  },
+  {
+    path: '/colaboradores/:id(\\d+)',
+    name: 'DetalheColaborador',
+    component: () => import('../views/DetalheColaborador.vue'),
+  },
 ];
 
 const router = createRouter({
