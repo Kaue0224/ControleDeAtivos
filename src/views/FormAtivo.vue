@@ -106,7 +106,9 @@
         class="form-input"
         :class="{ invalido: erros.localizacao }"
       >
-        <ion-select-option v-for="local in opcoesLocalizacao" :key="local" :value="local">{{ local }}</ion-select-option>
+        <ion-select-option v-for="local in opcoesLocalizacao" :key="local" :value="local">{{
+          local
+        }}</ion-select-option>
       </ion-select>
       <p v-if="erros.localizacao" class="erro-campo">{{ erros.localizacao }}</p>
 
@@ -134,7 +136,8 @@ import {
   useIonRouter,
 } from '@ionic/vue';
 import BaseLayout from '@/components/Toolbar-site.vue';
-import { LOCALIZACOES, TIPOS_ATIVO } from '@/data/opcoes';
+import { listarNomesCategorias } from '@/services/categorias';
+import { listarNomesLocalizacoes } from '@/services/localizacoes';
 import {
   atualizarAtivo,
   buscarAtivo,
@@ -166,12 +169,16 @@ const voltarPara = computed(() =>
   modo.value === 'editar' ? `/ativos/${encodeURIComponent(patrimonioOriginal.value)}` : '/ativos',
 );
 
-/** Garante que o valor atual do ativo apareça nas opções, mesmo que não esteja na lista provisória. */
+// Opções vindas dos cadastros de Categorias e Localizações (Pedro), carregadas a cada entrada na página.
+const categorias = ref<string[]>([]);
+const localizacoes = ref<string[]>([]);
+
+/** Garante que o valor atual do ativo apareça nas opções, mesmo que não esteja mais cadastrado. */
 function comValorAtual(lista: string[], atual: string | undefined) {
   return atual && !lista.includes(atual) ? [...lista, atual] : lista;
 }
-const opcoesTipo = computed(() => comValorAtual(TIPOS_ATIVO, ativoOriginal.value?.tipo));
-const opcoesLocalizacao = computed(() => comValorAtual(LOCALIZACOES, ativoOriginal.value?.localizacao));
+const opcoesTipo = computed(() => comValorAtual(categorias.value, ativoOriginal.value?.tipo));
+const opcoesLocalizacao = computed(() => comValorAtual(localizacoes.value, ativoOriginal.value?.localizacao));
 
 // Depois da primeira tentativa de salvar, os erros somem conforme o usuário corrige.
 watch(
@@ -195,10 +202,13 @@ async function preparar() {
   tentouSalvar.value = false;
   form.value = formularioVazio();
 
-  if (!id) return;
-
   carregando.value = true;
   try {
+    // Uma de cada vez: as duas usam a mesma conexão com o banco.
+    categorias.value = await listarNomesCategorias();
+    localizacoes.value = await listarNomesLocalizacoes();
+    if (!id) return;
+
     const ativo = await buscarAtivo(id);
     if (!ativo) {
       erroCarga.value = `Ativo ${id} não encontrado.`;
@@ -270,7 +280,12 @@ async function salvar() {
 async function aoEditarAtivo(anterior: Ativo, atualizado: Ativo): Promise<void> {}
 
 async function avisar(mensagem: string) {
-  const toast = await toastController.create({ message: mensagem, duration: 2000, color: 'success', position: 'bottom' });
+  const toast = await toastController.create({
+    message: mensagem,
+    duration: 2000,
+    color: 'success',
+    position: 'bottom',
+  });
   await toast.present();
 }
 

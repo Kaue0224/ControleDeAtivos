@@ -45,6 +45,11 @@ const EXEMPLOS: DadosColaborador[] = [
   },
 ];
 
+/** Colaboradores de exemplo (usado também pelo "Restaurar dados de exemplo"). */
+export function colaboradoresExemplo(): DadosColaborador[] {
+  return EXEMPLOS.map((c) => ({ ...c }));
+}
+
 const SQL_INSERIR = 'INSERT INTO colaboradores (nome, matricula, email, setor) VALUES (?, ?, ?, ?)';
 
 function valores(c: DadosColaborador) {

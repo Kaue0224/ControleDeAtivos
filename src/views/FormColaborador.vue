@@ -97,7 +97,7 @@ import {
   useIonRouter,
 } from '@ionic/vue';
 import BaseLayout from '@/components/Toolbar-site.vue';
-import { LOCALIZACOES } from '@/data/opcoes';
+import { listarNomesLocalizacoes } from '@/services/localizacoes';
 import {
   atualizarColaborador,
   buscarColaborador,
@@ -130,11 +130,14 @@ const salvando = ref(false);
 
 const voltarPara = computed(() => (modo.value === 'editar' ? `/colaboradores/${id.value}` : '/colaboradores'));
 
-// Mantém o setor atual nas opções, mesmo que ele não esteja na lista provisória.
+// Setores vêm do cadastro de Localizações/Setores (Pedro).
+const setores = ref<string[]>([]);
+
+// Mantém o setor atual nas opções, mesmo que ele não esteja mais cadastrado.
 const opcoesSetor = computed(() =>
-  setorOriginal.value && !LOCALIZACOES.includes(setorOriginal.value)
-    ? [...LOCALIZACOES, setorOriginal.value]
-    : LOCALIZACOES,
+  setorOriginal.value && !setores.value.includes(setorOriginal.value)
+    ? [...setores.value, setorOriginal.value]
+    : setores.value,
 );
 
 // Depois da primeira tentativa de salvar, os erros somem conforme o usuário corrige.
@@ -159,10 +162,11 @@ async function preparar() {
   tentouSalvar.value = false;
   form.value = formularioVazio();
 
-  if (!param) return;
-
   carregando.value = true;
   try {
+    setores.value = await listarNomesLocalizacoes();
+    if (!param) return;
+
     const colaborador = await buscarColaborador(id.value);
     if (!colaborador) {
       erroCarga.value = 'Colaborador não encontrado.';

@@ -32,6 +32,18 @@ CREATE TABLE IF NOT EXISTS colaboradores (
   email      TEXT NOT NULL DEFAULT '',
   setor      TEXT NOT NULL
 );
+
+-- Cadastros auxiliares (Pedro): alimentam os campos de seleção de localização/setor e de tipo.
+-- O ativo e o colaborador guardam o NOME (texto), então renomear aqui atualiza os dois.
+CREATE TABLE IF NOT EXISTS localizacoes (
+  id    INTEGER PRIMARY KEY AUTOINCREMENT,
+  nome  TEXT NOT NULL UNIQUE COLLATE NOCASE
+);
+
+CREATE TABLE IF NOT EXISTS categorias (
+  id    INTEGER PRIMARY KEY AUTOINCREMENT,
+  nome  TEXT NOT NULL UNIQUE COLLATE NOCASE
+);
 `;
 
 const naWeb = Capacitor.getPlatform() === 'web';

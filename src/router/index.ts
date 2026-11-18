@@ -28,6 +28,14 @@ const routes: RouteRecordRaw[] = [
     name: 'DetalheColaborador',
     component: () => import('../views/DetalheColaborador.vue'),
   },
+
+  // Cadastros auxiliares (Pedro) — cadastro, edição e exclusão na própria página.
+  { path: '/localizacoes', name: 'Localizacoes', component: () => import('../views/LocalizacoesPage.vue') },
+  { path: '/categorias', name: 'Categorias', component: () => import('../views/CategoriasPage.vue') },
+
+  // ⚠️ PROVISÓRIO (Pedro): só para o botão "Restaurar dados de exemplo" (UC10) ter onde ficar.
+  // O Kaue substitui pela página Resumo dele, mantendo o <BotaoRestaurarExemplo />.
+  { path: '/resumo', name: 'Resumo', component: () => import('../views/ResumoPage.vue') },
 ];
 
 const router = createRouter({

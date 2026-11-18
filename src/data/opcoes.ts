@@ -1,16 +1,17 @@
 /**
- * Opções PROVISÓRIAS dos campos de seleção do formulário de ativo.
+ * Valores de EXEMPLO dos cadastros auxiliares (Pedro).
  *
- * - LOCALIZACOES será substituída pelos setores cadastrados na página de Setores (Pedro).
- * - TIPOS_ATIVO será substituída pelas categorias cadastradas na página de Categorias (Pedro).
+ * As opções dos campos de seleção agora vêm do banco (tabelas `localizacoes` e `categorias`),
+ * cadastradas nas páginas /localizacoes e /categorias. Estas listas só são usadas para:
+ * - preencher as tabelas na primeira vez que o app abre (tabela vazia);
+ * - "Restaurar dados de exemplo" (UC10).
  *
- * Para trocar, basta o FormAtivo.vue passar a buscar as opções no service correspondente
- * em vez de importar daqui.
+ * Elas cobrem todos os tipos e localizações usados nos ativos e colaboradores de exemplo.
  */
 
-export const TIPOS_ATIVO: string[] = ['Celular', 'Desktop', 'Impressora', 'Monitor', 'Notebook', 'Tablet'];
+export const CATEGORIAS_EXEMPLO: string[] = ['Celular', 'Desktop', 'Impressora', 'Monitor', 'Notebook', 'Tablet'];
 
-export const LOCALIZACOES: string[] = [
+export const LOCALIZACOES_EXEMPLO: string[] = [
   'Almoxarifado',
   'Comercial · 2º andar',
   'Financeiro · 2º andar',
