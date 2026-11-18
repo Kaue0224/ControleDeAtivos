@@ -32,6 +32,9 @@ npm-debug.log*
 /plugins
 /www
 
+# SQLite na web: copiado de node_modules/sql.js pelo "postinstall"
+/public/assets/sql-wasm.wasm
+
 # Playwright
 /test-results/
 /playwright-report/

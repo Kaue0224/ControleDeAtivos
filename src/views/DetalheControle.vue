@@ -5,7 +5,13 @@
         <span class="bolinha"></span>
         {{ ativo.status }}
       </span>
-      <ion-button fill="outline" size="small" class="btn-editar">Editar</ion-button>
+      <ion-button
+        fill="outline"
+        size="small"
+        class="btn-editar"
+        :router-link="`/ativos/${encodeURIComponent(String($route.params.id))}/editar`"
+        >Editar</ion-button
+      >
     </div>
 
     <div class="card-detalhes">
@@ -66,7 +72,19 @@
 
         <template v-if="mov.tipo === 'transferencia'">
           <label class="form-label">Nova localização <span class="obrigatorio">*</span></label>
-          <ion-input v-model="mov.localizacao" fill="outline" placeholder="Ex.: RH · 1º andar" class="form-input" />
+          <!-- Opções vindas do cadastro de Localizações/Setores (Pedro) -->
+          <ion-select
+            v-model="mov.localizacao"
+            fill="outline"
+            interface="action-sheet"
+            placeholder="Selecione"
+            cancel-text="Cancelar"
+            class="form-input"
+          >
+            <ion-select-option v-for="local in opcoesLocalizacao" :key="local" :value="local">
+              {{ local }}
+            </ion-select-option>
+          </ion-select>
         </template>
 
         <template v-if="mov.tipo === 'baixa'">
@@ -99,8 +117,9 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { IonButton, IonInput, IonTextarea, IonSelect, IonSelectOption } from '@ionic/vue';
+import { IonButton, IonInput, IonTextarea, IonSelect, IonSelectOption, onIonViewWillEnter } from '@ionic/vue';
 import BaseLayout from '@/components/Toolbar-site.vue';
+import { listarNomesLocalizacoes } from '@/services/localizacoes';
 
 type StatusAtivo = 'Em uso' | 'Manutenção' | 'Baixado';
 type TipoEvento = 'cadastro' | 'transferencia' | 'manutencao' | 'devolucao' | 'baixa';
@@ -175,6 +194,16 @@ const movVazia = () => ({
 });
 
 const mov = ref(movVazia());
+
+// Opções do campo "Nova localização" (cadastro de Localizações/Setores — Pedro).
+const opcoesLocalizacao = ref<string[]>([]);
+onIonViewWillEnter(async () => {
+  try {
+    opcoesLocalizacao.value = await listarNomesLocalizacoes();
+  } catch (e) {
+    console.error(e);
+  }
+});
 const erro = ref('');
 
 const baixado = computed(() => ativo.value.status === 'Baixado');
