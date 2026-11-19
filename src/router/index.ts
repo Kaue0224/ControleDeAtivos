@@ -1,19 +1,43 @@
 import { createRouter, createWebHistory } from '@ionic/vue-router';
 import type { RouteRecordRaw } from 'vue-router';
 
-import HomePage from '../views/HomePage.vue';
+import ListaAtivos from '../views/ListaAtivos.vue';
 
 const routes: RouteRecordRaw[] = [
+  { path: '/', redirect: '/ativos' },
+  { path: '/home', redirect: '/ativos' },
+
+  // Ativos — o :id é o número de patrimônio (ex.: /ativos/PAT-00112).
+  // "/ativos/novo" precisa vir antes de "/ativos/:id", senão "novo" seria lido como patrimônio.
+  { path: '/ativos', name: 'ListaAtivos', component: ListaAtivos },
+  { path: '/ativos/novo', name: 'NovoAtivo', component: () => import('../views/FormAtivo.vue') },
+  { path: '/ativos/:id/editar', name: 'EditarAtivo', component: () => import('../views/FormAtivo.vue') },
+  { path: '/ativos/:id', name: 'DetalheAtivo', component: () => import('../views/DetalheControle.vue') },
+
+  // Colaboradores — o :id é o código numérico do colaborador (ex.: /colaboradores/3).
+  // "/colaboradores/novo" precisa vir antes de "/colaboradores/:id".
+  { path: '/colaboradores', name: 'ListaColaboradores', component: () => import('../views/ListaColaboradores.vue') },
+  { path: '/colaboradores/novo', name: 'NovoColaborador', component: () => import('../views/FormColaborador.vue') },
   {
-    path: '/',
-    redirect: '/home',
+    path: '/colaboradores/:id(\\d+)/editar',
+    name: 'EditarColaborador',
+    component: () => import('../views/FormColaborador.vue'),
   },
   {
-    path: '/home',
-    name: 'Home',
-    component: HomePage,
+    path: '/colaboradores/:id(\\d+)',
+    name: 'DetalheColaborador',
+    component: () => import('../views/DetalheColaborador.vue'),
   },
-  { path: '/detalhes', component: () => import('../views/DetalheControle.vue') },
+
+  // Cadastros auxiliares (Pedro) — cadastro, edição e exclusão na própria página.
+  { path: '/localizacoes', name: 'Localizacoes', component: () => import('../views/LocalizacoesPage.vue') },
+  { path: '/categorias', name: 'Categorias', component: () => import('../views/CategoriasPage.vue') },
+
+  // Histórico geral: movimentações de todos os ativos, com filtro por tipo e data.
+  { path: '/historico', name: 'Historico', component: () => import('../views/HistoricoGeral.vue') },
+
+  // Resumo: botão de restaurar dados de exemplo (UC10).
+  { path: '/resumo', name: 'Resumo', component: () => import('../views/ResumoPage.vue') },
 ];
 
 const router = createRouter({

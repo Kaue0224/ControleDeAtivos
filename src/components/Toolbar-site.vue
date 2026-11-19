@@ -11,7 +11,7 @@
         </ion-title>
 
         <div slot="end" class="direita">
-          <ion-segment v-model="aba">
+          <ion-segment :value="aba" @ion-change="trocarAba">
             <ion-segment-button value="ativos">
               <ion-label>Ativos</ion-label>
             </ion-segment-button>
@@ -30,7 +30,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed } from 'vue';
+import { useRoute } from 'vue-router';
 import {
   IonPage,
   IonHeader,
@@ -42,6 +43,8 @@ import {
   IonLabel,
   IonButtons,
   IonBackButton,
+  useIonRouter,
+  type SegmentChangeEventDetail,
 } from '@ionic/vue';
 
 withDefaults(
@@ -56,7 +59,15 @@ withDefaults(
   },
 );
 
-const aba = ref('ativos');
+// As abas levam às páginas /ativos e /resumo. A aba marcada acompanha a rota atual.
+const route = useRoute();
+const ionRouter = useIonRouter();
+const aba = computed(() => (route.path.startsWith('/resumo') ? 'resumo' : 'ativos'));
+
+function trocarAba(evento: CustomEvent<SegmentChangeEventDetail>) {
+  const destino = evento.detail.value === 'resumo' ? '/resumo' : '/ativos';
+  if (destino !== route.path) ionRouter.navigate(destino, 'root', 'replace');
+}
 </script>
 
 <style scoped>
