@@ -138,6 +138,7 @@ import {
 import BaseLayout from '@/components/Toolbar-site.vue';
 import { listarNomesCategorias } from '@/services/categorias';
 import { listarNomesLocalizacoes } from '@/services/localizacoes';
+import { registrarCadastro } from '@/services/movimentacoes';
 import {
   atualizarAtivo,
   buscarAtivo,
@@ -246,7 +247,8 @@ async function salvar() {
         erroGeral.value = 'Corrija os campos destacados.';
         return;
       }
-      await cadastrarAtivo(dados);
+      const novo = await cadastrarAtivo(dados);
+      await registrarCadastro(novo);
       await avisar('Ativo cadastrado.');
       voltar('/ativos');
     } else {

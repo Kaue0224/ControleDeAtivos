@@ -22,7 +22,19 @@ CREATE TABLE IF NOT EXISTS ativos (
   numero_serie TEXT NOT NULL,
   responsavel  TEXT NOT NULL DEFAULT '',
   localizacao  TEXT NOT NULL,
-  status       TEXT NOT NULL CHECK (status IN ('Em uso', 'Manutenção', 'Baixado'))
+  status       TEXT NOT NULL CHECK (status IN ('Em uso', 'Manutenção', 'Baixado')),
+  foto         TEXT NOT NULL DEFAULT ''
+);
+
+-- Histórico de cada ativo (linha do tempo). O ativo é ligado pelo patrimônio.
+CREATE TABLE IF NOT EXISTS eventos (
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  patrimonio   TEXT NOT NULL COLLATE NOCASE,
+  data         TEXT NOT NULL,
+  tipo         TEXT NOT NULL CHECK (tipo IN ('cadastro', 'transferencia', 'manutencao', 'devolucao', 'baixa')),
+  titulo       TEXT NOT NULL,
+  responsavel  TEXT NOT NULL DEFAULT '',
+  detalhe      TEXT NOT NULL DEFAULT ''
 );
 
 CREATE TABLE IF NOT EXISTS colaboradores (
@@ -60,6 +72,14 @@ async function prepararWeb() {
   await sqlite.initWebStore();
 }
 
+/** Bancos criados antes do campo foto não têm a coluna: acrescenta sem perder os dados. */
+async function atualizarEsquema(db: SQLiteDBConnection) {
+  const colunas = (await db.query('PRAGMA table_info(ativos)')).values ?? [];
+  if (!colunas.some((c) => c.name === 'foto')) {
+    await db.execute("ALTER TABLE ativos ADD COLUMN foto TEXT NOT NULL DEFAULT ''");
+  }
+}
+
 async function abrir(): Promise<SQLiteDBConnection> {
   if (naWeb) await prepararWeb();
 
@@ -72,6 +92,7 @@ async function abrir(): Promise<SQLiteDBConnection> {
 
   await db.open();
   await db.execute(ESQUEMA);
+  await atualizarEsquema(db);
   return db;
 }
 

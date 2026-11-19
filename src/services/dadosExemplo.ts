@@ -2,21 +2,18 @@
  * UC10 — Restaurar dados de exemplo (Pedro).
  *
  * Apaga tudo o que foi cadastrado e volta o banco para os dados de exemplo:
- * ativos, colaboradores, localizações/setores e categorias/tipos.
+ * ativos, colaboradores, localizações/setores, categorias/tipos e histórico (eventos).
  * Tudo acontece numa única transação: se algo falhar, nada é apagado.
- *
- * ⚠️ Quando a Flavia/Guilherme criarem a tabela de histórico (eventos), acrescente aqui o
- * DELETE dela e o INSERT dos eventos de exemplo, na lista `comandos`.
  */
 import { dadosExemplo } from './ativos';
-import { aguardarCargaInicial } from './cadastroSimples';
 import { colaboradoresExemplo } from './colaboradores';
 import { obterBanco, salvarAlteracoes } from './db';
+import { aguardarCargaEventos, eventosExemplo, SQL_INSERIR_EVENTO, valoresEvento } from './movimentacoes';
 
 import { CATEGORIAS_EXEMPLO, LOCALIZACOES_EXEMPLO } from '@/data/opcoes';
 
 /** Tabelas apagadas na restauração. */
-export const TABELAS_RESTAURADAS = ['ativos', 'colaboradores', 'localizacoes', 'categorias'] as const;
+export const TABELAS_RESTAURADAS = ['ativos', 'colaboradores', 'localizacoes', 'categorias', 'eventos'] as const;
 
 interface Comando {
   statement: string;
@@ -53,13 +50,16 @@ export function comandosRestauracao(): Comando[] {
   for (const nome of CATEGORIAS_EXEMPLO) {
     comandos.push({ statement: 'INSERT INTO categorias (nome) VALUES (?)', values: [nome] });
   }
+  for (const evento of eventosExemplo()) {
+    comandos.push({ statement: SQL_INSERIR_EVENTO, values: valoresEvento(evento) });
+  }
   return comandos;
 }
 
 /** Apaga todos os dados e grava novamente os dados de exemplo. */
 export async function restaurarDadosExemplo(): Promise<void> {
   // Espera a carga inicial de todas as tabelas terminar antes de abrir a transação.
-  await aguardarCargaInicial();
+  await aguardarCargaEventos();
   const db = await obterBanco();
   await db.executeSet(comandosRestauracao());
   await salvarAlteracoes();

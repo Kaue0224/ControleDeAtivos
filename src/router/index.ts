@@ -33,8 +33,10 @@ const routes: RouteRecordRaw[] = [
   { path: '/localizacoes', name: 'Localizacoes', component: () => import('../views/LocalizacoesPage.vue') },
   { path: '/categorias', name: 'Categorias', component: () => import('../views/CategoriasPage.vue') },
 
-  // ⚠️ PROVISÓRIO (Pedro): só para o botão "Restaurar dados de exemplo" (UC10) ter onde ficar.
-  // O Kaue substitui pela página Resumo dele, mantendo o <BotaoRestaurarExemplo />.
+  // Histórico geral: movimentações de todos os ativos, com filtro por tipo e data.
+  { path: '/historico', name: 'Historico', component: () => import('../views/HistoricoGeral.vue') },
+
+  // Resumo: botão de restaurar dados de exemplo (UC10).
   { path: '/resumo', name: 'Resumo', component: () => import('../views/ResumoPage.vue') },
 ];
 

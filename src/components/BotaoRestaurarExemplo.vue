@@ -32,7 +32,7 @@ async function confirmar() {
   const alerta = await alertController.create({
     header: 'Restaurar dados de exemplo',
     message:
-      'Todos os ativos, colaboradores, localizações e categorias cadastrados serão apagados e substituídos ' +
+      'Todos os ativos, colaboradores, localizações, categorias e o histórico serão apagados e substituídos ' +
       'pelos dados de exemplo. Essa ação não pode ser desfeita.',
     buttons: [
       { text: 'Cancelar', role: 'cancel' },

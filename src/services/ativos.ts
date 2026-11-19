@@ -23,6 +23,8 @@ export interface Ativo {
   responsavel: string;
   localizacao: string;
   status: StatusAtivo;
+  /** Foto do ativo (imagem em base64 ou caminho). Vazio ou ausente = sem foto. */
+  foto?: string;
 }
 
 /** Campos que podem ser alterados na edição (tudo menos o patrimônio). */
@@ -116,6 +118,7 @@ interface LinhaAtivo {
   responsavel: string;
   localizacao: string;
   status: StatusAtivo;
+  foto: string | null;
 }
 
 function linhaParaAtivo(l: LinhaAtivo): Ativo {
@@ -127,14 +130,15 @@ function linhaParaAtivo(l: LinhaAtivo): Ativo {
     responsavel: l.responsavel,
     localizacao: l.localizacao,
     status: l.status,
+    foto: l.foto ?? '',
   };
 }
 
-const SQL_INSERIR = `INSERT INTO ativos (patrimonio, tipo, modelo, numero_serie, responsavel, localizacao, status)
-  VALUES (?, ?, ?, ?, ?, ?, ?)`;
+const SQL_INSERIR = `INSERT INTO ativos (patrimonio, tipo, modelo, numero_serie, responsavel, localizacao, status, foto)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
 
 function valoresInsercao(a: Ativo) {
-  return [a.patrimonio, a.tipo, a.modelo, a.numeroSerie, a.responsavel, a.localizacao, a.status];
+  return [a.patrimonio, a.tipo, a.modelo, a.numeroSerie, a.responsavel, a.localizacao, a.status, a.foto ?? ''];
 }
 
 // ---------- Banco pronto (com dados de exemplo na primeira vez) ----------
@@ -198,12 +202,23 @@ export async function atualizarAtivo(patrimonio: string, dados: DadosEditaveis):
   if (!atual) {
     throw new Error(`Ativo ${patrimonio} não encontrado.`);
   }
+  // Se a foto não vier nos dados (ex.: formulário sem campo de foto), mantém a que já estava salva.
+  const foto = dados.foto ?? atual.foto ?? '';
   const db = await banco();
   await db.run(
-    `UPDATE ativos SET tipo = ?, modelo = ?, numero_serie = ?, responsavel = ?, localizacao = ?, status = ?
+    `UPDATE ativos SET tipo = ?, modelo = ?, numero_serie = ?, responsavel = ?, localizacao = ?, status = ?, foto = ?
      WHERE patrimonio = ?`,
-    [dados.tipo, dados.modelo, dados.numeroSerie, dados.responsavel, dados.localizacao, dados.status, atual.patrimonio],
+    [
+      dados.tipo,
+      dados.modelo,
+      dados.numeroSerie,
+      dados.responsavel,
+      dados.localizacao,
+      dados.status,
+      foto,
+      atual.patrimonio,
+    ],
   );
   await salvarAlteracoes();
-  return { ...dados, patrimonio: atual.patrimonio };
+  return { ...dados, foto, patrimonio: atual.patrimonio };
 }

@@ -1,232 +1,193 @@
 <template>
   <BaseLayout titulo="Detalhes do Ativo" mostrar-voltar>
-    <div class="topo">
-      <span class="status-chip" :class="classeStatus(ativo.status)">
-        <span class="bolinha"></span>
-        {{ ativo.status }}
-      </span>
-      <ion-button
-        fill="outline"
-        size="small"
-        class="btn-editar"
-        :router-link="`/ativos/${encodeURIComponent(String($route.params.id))}/editar`"
-        >Editar</ion-button
-      >
+    <div v-if="carregando" class="estado">
+      <ion-spinner name="crescent" />
     </div>
 
-    <div class="card-detalhes">
-      <div class="campo" v-for="campo in campos" :key="campo.rotulo">
-        <span class="rotulo">{{ campo.rotulo }}</span>
-        <span class="valor">{{ campo.valor }}</span>
-      </div>
+    <div v-else-if="erroCarga || !ativo" class="estado">
+      <p class="erro">{{ erroCarga }}</p>
+      <ion-button fill="outline" size="small" router-link="/ativos" router-direction="back">
+        Voltar para a lista
+      </ion-button>
     </div>
 
-    <h2 class="secao">Histórico · {{ historico.length }} registros</h2>
-
-    <ul class="timeline">
-      <li v-for="(item, i) in historico" :key="i" class="evento">
-        <span class="marcador" :class="item.tipo"></span>
-        <div class="evento-conteudo">
-          <div class="evento-meta">
-            <span class="data">{{ formatarData(item.data) }}</span>
-            <span class="tipo">{{ rotuloTipo[item.tipo] }}</span>
-          </div>
-          <strong class="evento-titulo">{{ item.titulo }}</strong>
-          <span v-if="item.responsavel" class="evento-detalhe"> Responsável: {{ item.responsavel }} </span>
-          <span v-if="item.detalhe" class="evento-detalhe">{{ item.detalhe }}</span>
-        </div>
-      </li>
-    </ul>
-
-    <div class="card-form">
-      <h2 class="secao secao-form">Registrar movimentação</h2>
-
-      <p v-if="baixado" class="aviso-baixa">Este ativo foi baixado e não aceita novas movimentações.</p>
-
-      <template v-else>
-        <label class="form-label">Tipo <span class="obrigatorio">*</span></label>
-        <ion-select
-          v-model="mov.tipo"
-          interface="action-sheet"
+    <template v-else>
+      <div class="topo">
+        <span class="status-chip" :class="classeStatus(ativo.status)">
+          <span class="bolinha"></span>
+          {{ ativo.status }}
+        </span>
+        <ion-button
           fill="outline"
-          placeholder="Selecione"
-          cancel-text="Cancelar"
-          class="form-input"
+          size="small"
+          class="btn-editar"
+          :router-link="`/ativos/${encodeURIComponent(ativo.patrimonio)}/editar`"
+          >Editar</ion-button
         >
-          <ion-select-option value="manutencao">Manutenção</ion-select-option>
-          <ion-select-option value="transferencia">Transferência</ion-select-option>
-          <ion-select-option value="devolucao">Devolvido ao usuário</ion-select-option>
-          <ion-select-option value="baixa">Baixa</ion-select-option>
-        </ion-select>
+      </div>
 
-        <label class="form-label">Data <span class="obrigatorio">*</span></label>
-        <ion-input v-model="mov.data" type="date" fill="outline" class="form-input" />
+      <div class="card-detalhes">
+        <div class="campo" v-for="campo in campos" :key="campo.rotulo">
+          <span class="rotulo">{{ campo.rotulo }}</span>
+          <span class="valor">{{ campo.valor }}</span>
+        </div>
+      </div>
 
-        <label class="form-label"> {{ rotuloResponsavel }} <span class="obrigatorio">*</span> </label>
-        <ion-input v-model="mov.responsavel" fill="outline" placeholder="Nome completo" class="form-input" />
+      <h2 class="secao">Histórico · {{ historico.length }} {{ historico.length === 1 ? 'registro' : 'registros' }}</h2>
 
-        <template v-if="mov.tipo === 'manutencao'">
-          <label class="form-label">Serviço <span class="obrigatorio">*</span></label>
-          <ion-input v-model="mov.servico" fill="outline" placeholder="Ex.: troca de bateria" class="form-input" />
-        </template>
+      <p v-if="historico.length === 0" class="vazio">Nenhum registro no histórico.</p>
+      <LinhaDoTempo v-else :eventos="historico" />
 
-        <template v-if="mov.tipo === 'transferencia'">
-          <label class="form-label">Nova localização <span class="obrigatorio">*</span></label>
-          <!-- Opções vindas do cadastro de Localizações/Setores (Pedro) -->
+      <div class="card-form">
+        <h2 class="secao secao-form">Registrar movimentação</h2>
+
+        <p v-if="baixado" class="aviso-baixa">Este ativo foi baixado e não aceita novas movimentações.</p>
+
+        <template v-else>
+          <label class="form-label">Tipo <span class="obrigatorio">*</span></label>
           <ion-select
-            v-model="mov.localizacao"
-            fill="outline"
+            v-model="mov.tipo"
             interface="action-sheet"
+            fill="outline"
             placeholder="Selecione"
             cancel-text="Cancelar"
             class="form-input"
           >
-            <ion-select-option v-for="local in opcoesLocalizacao" :key="local" :value="local">
-              {{ local }}
-            </ion-select-option>
+            <ion-select-option value="manutencao">Manutenção</ion-select-option>
+            <ion-select-option value="transferencia">Transferência</ion-select-option>
+            <ion-select-option value="devolucao">Devolvido ao usuário</ion-select-option>
+            <ion-select-option value="baixa">Baixa</ion-select-option>
           </ion-select>
+
+          <label class="form-label">Data <span class="obrigatorio">*</span></label>
+          <ion-input v-model="mov.data" type="date" :max="hoje()" fill="outline" class="form-input" />
+
+          <label class="form-label"> {{ rotuloResponsavel(mov.tipo) }} <span class="obrigatorio">*</span> </label>
+          <ion-input v-model="mov.responsavel" fill="outline" placeholder="Nome completo" class="form-input" />
+
+          <template v-if="mov.tipo === 'manutencao'">
+            <label class="form-label">Serviço <span class="obrigatorio">*</span></label>
+            <ion-input v-model="mov.servico" fill="outline" placeholder="Ex.: troca de bateria" class="form-input" />
+          </template>
+
+          <template v-if="mov.tipo === 'transferencia'">
+            <label class="form-label">Nova localização <span class="obrigatorio">*</span></label>
+            <!-- Opções vindas do cadastro de Localizações/Setores -->
+            <ion-select
+              v-model="mov.localizacao"
+              fill="outline"
+              interface="action-sheet"
+              placeholder="Selecione"
+              cancel-text="Cancelar"
+              class="form-input"
+            >
+              <ion-select-option v-for="local in opcoesLocalizacao" :key="local" :value="local">
+                {{ local }}
+              </ion-select-option>
+            </ion-select>
+          </template>
+
+          <template v-if="mov.tipo === 'baixa'">
+            <label class="form-label">Motivo <span class="obrigatorio">*</span></label>
+            <ion-input
+              v-model="mov.motivo"
+              fill="outline"
+              placeholder="Ex.: equipamento sem conserto"
+              class="form-input"
+            />
+          </template>
+
+          <label class="form-label">Observações</label>
+          <ion-textarea v-model="mov.observacoes" fill="outline" auto-grow placeholder="Opcional" class="form-input" />
+
+          <p v-if="erro" class="erro">{{ erro }}</p>
+
+          <ion-button
+            expand="block"
+            class="btn-registrar"
+            :color="mov.tipo === 'baixa' ? 'danger' : 'primary'"
+            :disabled="salvando"
+            @click="registrar"
+          >
+            <ion-spinner v-if="salvando" slot="start" name="crescent" />
+            {{ mov.tipo === 'baixa' ? 'Confirmar baixa' : 'Registrar' }}
+          </ion-button>
         </template>
-
-        <template v-if="mov.tipo === 'baixa'">
-          <label class="form-label">Motivo <span class="obrigatorio">*</span></label>
-          <ion-input
-            v-model="mov.motivo"
-            fill="outline"
-            placeholder="Ex.: equipamento sem conserto"
-            class="form-input"
-          />
-        </template>
-
-        <label class="form-label">Observações</label>
-        <ion-textarea v-model="mov.observacoes" fill="outline" auto-grow placeholder="Opcional" class="form-input" />
-
-        <p v-if="erro" class="erro">{{ erro }}</p>
-
-        <ion-button
-          expand="block"
-          class="btn-registrar"
-          :color="mov.tipo === 'baixa' ? 'danger' : 'primary'"
-          @click="registrar"
-        >
-          {{ mov.tipo === 'baixa' ? 'Confirmar baixa' : 'Registrar' }}
-        </ion-button>
-      </template>
-    </div>
+      </div>
+    </template>
   </BaseLayout>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { IonButton, IonInput, IonTextarea, IonSelect, IonSelectOption, onIonViewWillEnter } from '@ionic/vue';
+import { useRoute } from 'vue-router';
+import {
+  alertController,
+  IonButton,
+  IonInput,
+  IonSelect,
+  IonSelectOption,
+  IonSpinner,
+  IonTextarea,
+  onIonViewWillEnter,
+  toastController,
+} from '@ionic/vue';
 import BaseLayout from '@/components/Toolbar-site.vue';
+import LinhaDoTempo from '@/components/LinhaDoTempo.vue';
+import { buscarAtivo, type Ativo, type StatusAtivo } from '@/services/ativos';
 import { listarNomesLocalizacoes } from '@/services/localizacoes';
+import { listarEventosDoAtivo, movimentar, type Evento } from '@/services/movimentacoes';
+import { hoje, movimentacaoVazia, rotuloResponsavel, validarMovimentacao } from '@/utils/movimentacao';
 
-type StatusAtivo = 'Em uso' | 'Manutenção' | 'Baixado';
-type TipoEvento = 'cadastro' | 'transferencia' | 'manutencao' | 'devolucao' | 'baixa';
-type TipoMovimentacao = 'manutencao' | 'transferencia' | 'devolucao' | 'baixa';
+const route = useRoute();
 
-interface Evento {
-  data: string;
-  tipo: TipoEvento;
-  titulo: string;
-  responsavel?: string;
-  detalhe?: string;
-}
-
-const ativo = ref({
-  tipo: 'Notebook',
-  numeroSerie: 'DL5440-7HQ2K93',
-  patrimonio: 'PAT-00112',
-  responsavel: 'Mariana Lopes',
-  localizacao: 'Financeiro · 2º andar',
-  status: 'Em uso' as StatusAtivo,
-});
-
-const campos = computed(() => [
-  { rotulo: 'Tipo', valor: ativo.value.tipo },
-  { rotulo: 'Número de série', valor: ativo.value.numeroSerie },
-  { rotulo: 'Patrimônio', valor: ativo.value.patrimonio },
-  { rotulo: 'Responsável', valor: ativo.value.responsavel },
-  { rotulo: 'Localização', valor: ativo.value.localizacao },
-  { rotulo: 'Status', valor: ativo.value.status },
-]);
-
-const historico = ref<Evento[]>([
-  {
-    data: '2026-02-10',
-    tipo: 'transferencia',
-    titulo: 'Responsável: — → Mariana Lopes',
-    detalhe: 'Local: Almoxarifado → Financeiro · 2º andar',
-  },
-  {
-    data: '2026-02-03',
-    tipo: 'cadastro',
-    titulo: 'Cadastro do ativo',
-    detalhe: 'Status inicial: Em uso',
-  },
-]);
-
-const rotuloTipo: Record<TipoEvento, string> = {
-  cadastro: 'Cadastro',
-  transferencia: 'Transferência',
-  manutencao: 'Manutenção',
-  devolucao: 'Devolução',
-  baixa: 'Baixa',
-};
-
-const statusPorTipo: Record<TipoMovimentacao, StatusAtivo> = {
-  manutencao: 'Manutenção',
-  transferencia: 'Em uso',
-  devolucao: 'Em uso',
-  baixa: 'Baixado',
-};
-
-const hoje = () => new Date().toISOString().slice(0, 10);
-
-const movVazia = () => ({
-  tipo: '' as TipoMovimentacao | '',
-  data: hoje(),
-  responsavel: '',
-  servico: '',
-  localizacao: '',
-  motivo: '',
-  observacoes: '',
-});
-
-const mov = ref(movVazia());
-
-// Opções do campo "Nova localização" (cadastro de Localizações/Setores — Pedro).
+const ativo = ref<Ativo | null>(null);
+const historico = ref<Evento[]>([]);
 const opcoesLocalizacao = ref<string[]>([]);
-onIonViewWillEnter(async () => {
-  try {
-    opcoesLocalizacao.value = await listarNomesLocalizacoes();
-  } catch (e) {
-    console.error(e);
-  }
-});
+const mov = ref(movimentacaoVazia());
+
+const carregando = ref(true);
+const salvando = ref(false);
+const erroCarga = ref('');
 const erro = ref('');
 
-const baixado = computed(() => ativo.value.status === 'Baixado');
+const campos = computed(() => [
+  { rotulo: 'Modelo', valor: ativo.value?.modelo },
+  { rotulo: 'Tipo', valor: ativo.value?.tipo },
+  { rotulo: 'Número de série', valor: ativo.value?.numeroSerie },
+  { rotulo: 'Patrimônio', valor: ativo.value?.patrimonio },
+  { rotulo: 'Responsável', valor: ativo.value?.responsavel || '—' },
+  { rotulo: 'Localização', valor: ativo.value?.localizacao },
+]);
 
-const rotuloResponsavel = computed(() => {
-  switch (mov.value.tipo) {
-    case 'manutencao':
-      return 'Técnico responsável';
-    case 'transferencia':
-      return 'Novo responsável';
-    case 'devolucao':
-      return 'Usuário que recebeu';
-    case 'baixa':
-      return 'Responsável pela baixa';
-    default:
-      return 'Responsável';
+const baixado = computed(() => ativo.value?.status === 'Baixado');
+
+async function carregar() {
+  carregando.value = true;
+  erroCarga.value = '';
+  erro.value = '';
+  mov.value = movimentacaoVazia();
+  try {
+    const patrimonio = typeof route.params.id === 'string' ? route.params.id : '';
+    const encontrado = await buscarAtivo(patrimonio);
+    if (!encontrado) {
+      ativo.value = null;
+      erroCarga.value = `Ativo ${patrimonio} não encontrado.`;
+      return;
+    }
+    historico.value = await listarEventosDoAtivo(encontrado.patrimonio);
+    opcoesLocalizacao.value = await listarNomesLocalizacoes();
+    ativo.value = encontrado;
+  } catch (e) {
+    console.error(e);
+    erroCarga.value = 'Não foi possível carregar o ativo.';
+  } finally {
+    carregando.value = false;
   }
-});
-
-function formatarData(iso: string) {
-  const [ano, mes, dia] = iso.split('-');
-  return `${dia}/${mes}/${ano}`;
 }
+
+// Recarrega ao entrar (inclusive ao voltar da edição).
+onIonViewWillEnter(carregar);
 
 function classeStatus(status: StatusAtivo) {
   return {
@@ -236,68 +197,44 @@ function classeStatus(status: StatusAtivo) {
   };
 }
 
-function validar(): string {
-  const m = mov.value;
-  if (!m.tipo) return 'Selecione o tipo da movimentação.';
-  if (!m.data) return 'Informe a data.';
-  if (!m.responsavel.trim()) return `Informe o campo "${rotuloResponsavel.value}".`;
-  if (m.tipo === 'manutencao' && !m.servico.trim()) return 'Informe o serviço.';
-  if (m.tipo === 'transferencia' && !m.localizacao.trim()) return 'Informe a nova localização.';
-  if (m.tipo === 'baixa' && !m.motivo.trim()) return 'Informe o motivo da baixa.';
-  return '';
-}
-
-function registrar() {
-  erro.value = validar();
+async function registrar() {
+  if (!ativo.value) return;
+  erro.value = validarMovimentacao(mov.value);
   if (erro.value) return;
 
-  const m = mov.value;
-  const a = ativo.value;
-  const tipo = m.tipo as TipoMovimentacao;
-  const responsavel = m.responsavel.trim();
-  const statusAnterior = a.status;
-  const novoStatus = statusPorTipo[tipo];
-  const detalhes: string[] = [];
-  let evento: Evento;
-
-  switch (tipo) {
-    case 'manutencao':
-      evento = { data: m.data, tipo, titulo: m.servico.trim(), responsavel };
-      break;
-
-    case 'transferencia': {
-      const respAnterior = a.responsavel || '—';
-      const localAnterior = a.localizacao || '—';
-      a.responsavel = responsavel;
-      a.localizacao = m.localizacao.trim();
-      evento = { data: m.data, tipo, titulo: `Responsável: ${respAnterior} → ${responsavel}` };
-      detalhes.push(`Local: ${localAnterior} → ${a.localizacao}`);
-      break;
-    }
-
-    case 'devolucao':
-      a.responsavel = responsavel;
-      evento = { data: m.data, tipo, titulo: `Devolvido a ${responsavel}` };
-      break;
-
-    case 'baixa':
-      evento = { data: m.data, tipo, titulo: 'Baixa do ativo', responsavel };
-      detalhes.push(`Motivo: ${m.motivo.trim()}`);
-      break;
+  // A baixa não pode ser desfeita, então pede confirmação.
+  if (mov.value.tipo === 'baixa') {
+    const alerta = await alertController.create({
+      header: 'Confirmar baixa',
+      message: `Dar baixa em ${ativo.value.patrimonio}? Depois disso ele não aceita novas movimentações.`,
+      buttons: [
+        { text: 'Cancelar', role: 'cancel' },
+        { text: 'Dar baixa', role: 'destructive' },
+      ],
+    });
+    await alerta.present();
+    const { role } = await alerta.onDidDismiss();
+    if (role !== 'destructive') return;
   }
 
-  if (novoStatus !== statusAnterior) {
-    detalhes.push(`Status: ${statusAnterior} → ${novoStatus}`);
-    a.status = novoStatus;
+  salvando.value = true;
+  try {
+    ativo.value = await movimentar(ativo.value.patrimonio, mov.value);
+    historico.value = await listarEventosDoAtivo(ativo.value.patrimonio);
+    mov.value = movimentacaoVazia();
+    const toast = await toastController.create({
+      message: 'Movimentação registrada.',
+      duration: 2000,
+      color: 'success',
+      position: 'bottom',
+    });
+    await toast.present();
+  } catch (e) {
+    console.error(e);
+    erro.value = e instanceof Error ? e.message : 'Não foi possível registrar a movimentação.';
+  } finally {
+    salvando.value = false;
   }
-
-  const obs = m.observacoes.trim();
-  if (obs) detalhes.push(obs);
-
-  if (detalhes.length) evento!.detalhe = detalhes.join(' · ');
-
-  historico.value.unshift(evento!);
-  mov.value = movVazia();
 }
 </script>
 
@@ -384,77 +321,8 @@ function registrar() {
   color: #5f6670;
   margin: 0 0 16px;
 }
-
-.timeline {
-  list-style: none;
-  padding: 0;
+.vazio {
   margin: 0 0 28px;
-}
-.evento {
-  position: relative;
-  display: flex;
-  gap: 14px;
-  padding-bottom: 20px;
-}
-.evento:not(:last-child)::before {
-  content: '';
-  position: absolute;
-  left: 7px;
-  top: 18px;
-  bottom: 0;
-  width: 2px;
-  background: #e3e5e8;
-}
-.marcador {
-  flex-shrink: 0;
-  width: 16px;
-  height: 16px;
-  margin-top: 2px;
-  border-radius: 50%;
-  border: 3px solid #fff;
-  box-shadow: 0 0 0 1px #d0d4d9;
-}
-.marcador.transferencia {
-  background: #6d3ff0;
-}
-.marcador.cadastro {
-  background: #5f6670;
-}
-.marcador.manutencao {
-  background: #e08a00;
-}
-.marcador.devolucao {
-  background: #1e9e4a;
-}
-.marcador.baixa {
-  background: #d92d20;
-}
-
-.evento-conteudo {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.evento-meta {
-  display: flex;
-  gap: 8px;
-  font-size: 12px;
-}
-.data {
-  color: #6b7280;
-}
-.tipo {
-  color: #5f6670;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-.evento-titulo {
-  font-size: 15px;
-  color: #1f2328;
-}
-.evento-detalhe {
-  font-size: 14px;
   color: #6b7280;
 }
 
@@ -493,5 +361,21 @@ function registrar() {
   --border-radius: 8px;
   text-transform: none;
   margin-top: 4px;
+}
+
+.estado {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 32px 16px;
+  text-align: center;
+  color: #6b7280;
+}
+.estado p {
+  margin: 0;
+}
+.estado ion-button {
+  text-transform: none;
 }
 </style>
