@@ -84,6 +84,9 @@
           <h2 class="modelo">{{ ativo.modelo }}</h2>
           <p>{{ ativo.tipo }} · {{ ativo.patrimonio }} · Série {{ ativo.numeroSerie }}</p>
           <p>{{ ativo.responsavel || 'Sem responsável' }} · {{ ativo.localizacao }}</p>
+          <p v-if="ativo.status === 'Manutenção'" class="parado">
+            {{ textoParado(ativo.patrimonio) }}
+          </p>
         </ion-label>
         <ion-chip slot="end" class="status-chip" :class="classeStatus(ativo.status)">
           <span class="bolinha"></span>
@@ -112,11 +115,15 @@ import {
 import { add } from 'ionicons/icons';
 import BaseLayout from '@/components/Toolbar-site.vue';
 import { listarAtivos, STATUS_ATIVO, type Ativo, type StatusAtivo } from '@/services/ativos';
+import { listarEventos } from '@/services/movimentacoes';
 import { filtrarAtivos, filtrosVazios, temFiltroAtivo, type FiltrosAtivos } from '@/utils/filtrosAtivos';
 
 const ativos = ref<Ativo[]>([]);
 const carregando = ref(true);
 const erro = ref('');
+
+// patrimônio -> data (AAAA-MM-DD) em que entrou em manutenção
+const inicioManutencao = ref<Record<string, string>>({});
 
 // Estado único dos filtros (busca, tipo e status).
 const filtros = ref<FiltrosAtivos>(filtrosVazios());
@@ -136,6 +143,20 @@ async function carregar() {
   erro.value = '';
   try {
     ativos.value = await listarAtivos();
+
+    // listarEventos já vem do mais recente para o mais antigo,
+    // então o primeiro evento 'manutencao' de cada patrimônio é o que vale.
+    const mapa: Record<string, string> = {};
+    const cadastro: Record<string, string> = {};
+    for (const e of await listarEventos()) {
+      if (e.tipo === 'manutencao' && !mapa[e.patrimonio]) mapa[e.patrimonio] = e.data;
+      if (e.tipo === 'cadastro') cadastro[e.patrimonio] = e.data;
+    }
+    // Sem evento de manutenção (ativo criado já em manutenção): usa a data do cadastro.
+    for (const [patrimonio, data] of Object.entries(cadastro)) {
+      if (!mapa[patrimonio]) mapa[patrimonio] = data;
+    }
+    inicioManutencao.value = mapa;
   } catch (e) {
     console.error(e);
     erro.value = 'Não foi possível carregar os ativos.';
@@ -154,6 +175,20 @@ function classeStatus(status: StatusAtivo) {
     'em-manutencao': status === 'Manutenção',
     baixado: status === 'Baixado',
   };
+}
+
+function textoParado(patrimonio: string): string {
+  const data = inicioManutencao.value[patrimonio];
+  if (!data) return 'Em manutenção (data não registrada)';
+
+  const [ano, mes, dia] = data.split('-').map(Number);
+  const inicio = new Date(ano, mes - 1, dia); // data local, evita erro de fuso
+  const agora = new Date();
+  const hoje = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate());
+  const dias = Math.max(0, Math.round((hoje.getTime() - inicio.getTime()) / 86_400_000));
+
+  if (dias === 0) return 'Parado desde hoje';
+  return `Parado há ${dias} ${dias === 1 ? 'dia' : 'dias'}`;
 }
 </script>
 
@@ -214,6 +249,11 @@ function classeStatus(status: StatusAtivo) {
   font-size: 16px;
   font-weight: 600;
   color: #1f2328;
+}
+
+.parado {
+  font-weight: 600;
+  color: #a35f00;
 }
 
 .status-chip {
