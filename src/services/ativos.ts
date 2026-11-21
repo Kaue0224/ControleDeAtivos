@@ -1,11 +1,9 @@
 /**
- * ⚠️ VERSÃO PROVISÓRIA — criada pelo Rafael para destravar as páginas de Lista e Cadastro/Edição.
- * Será revisada com Guilherme e Flavia, que são os responsáveis pelo service de ativos.
+ * Service de ativos: listar, buscar, cadastrar e atualizar.
  *
  * - Os dados ficam no SQLite (tabela `ativos`, ver db.ts). Todas as funções são assíncronas: use `await`.
- * - Os tipos foram tirados do DetalheControle.vue, com um campo novo: `modelo` (combinado pelo grupo).
  * - O `patrimonio` é o identificador do ativo (vai na URL: /ativos/PAT-00112) e não muda após o cadastro.
- * - Histórico/eventos e movimentação (`movimentar`) ainda não estão aqui: ficam a cargo de Guilherme e Flavia.
+ * - Histórico (eventos) e movimentação (`movimentar`) ficam em movimentacoes.ts.
  * - Na primeira vez que o banco é aberto (tabela vazia), os dados de exemplo são inseridos.
  */
 import { obterBanco, salvarAlteracoes } from './db';

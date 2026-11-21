@@ -1,11 +1,15 @@
 import { createRouter, createWebHistory } from '@ionic/vue-router';
 import type { RouteRecordRaw } from 'vue-router';
 
+import { estaLogado } from '../services/usuarios';
 import ListaAtivos from '../views/ListaAtivos.vue';
 
 const routes: RouteRecordRaw[] = [
   { path: '/', redirect: '/ativos' },
   { path: '/home', redirect: '/ativos' },
+
+  { path: '/login', name: 'Login', component: () => import('../views/LoginPage.vue'), meta: { publica: true } },
+  { path: '/perfil', name: 'Perfil', component: () => import('../views/PerfilPage.vue') },
 
   // Ativos — o :id é o número de patrimônio (ex.: /ativos/PAT-00112).
   // "/ativos/novo" precisa vir antes de "/ativos/:id", senão "novo" seria lido como patrimônio.
@@ -43,6 +47,12 @@ const routes: RouteRecordRaw[] = [
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes,
+});
+
+router.beforeEach(async (to) => {
+  const logado = await estaLogado();
+  if (to.meta.publica) return logado ? '/ativos' : true;
+  return logado ? true : '/login';
 });
 
 export default router;
