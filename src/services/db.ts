@@ -1,6 +1,4 @@
 /**
- * ⚠️ VERSÃO PROVISÓRIA — conexão SQLite criada pelo Rafael; será revisada com Guilherme e Flavia.
- *
  * Abre (uma única vez) o banco SQLite usado pelo app, via @capacitor-community/sqlite.
  * - Android/iOS: usa o SQLite nativo do aparelho.
  * - Navegador (npm run dev): usa o componente <jeep-sqlite> (sql.js + IndexedDB). Ele precisa do arquivo

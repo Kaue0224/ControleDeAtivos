@@ -19,6 +19,14 @@
               <ion-label>Resumo</ion-label>
             </ion-segment-button>
           </ion-segment>
+          <ion-buttons>
+            <ion-button router-link="/perfil" aria-label="Meu perfil">
+              <ion-icon slot="icon-only" :icon="personCircleOutline" />
+            </ion-button>
+            <ion-button aria-label="Sair" @click="sairDaConta">
+              <ion-icon slot="icon-only" :icon="logOutOutline" />
+            </ion-button>
+          </ion-buttons>
         </div>
       </ion-toolbar>
     </ion-header>
@@ -43,9 +51,13 @@ import {
   IonLabel,
   IonButtons,
   IonBackButton,
+  IonButton,
+  IonIcon,
   useIonRouter,
   type SegmentChangeEventDetail,
 } from '@ionic/vue';
+import { logOutOutline, personCircleOutline } from 'ionicons/icons';
+import { sair } from '@/services/usuarios';
 
 withDefaults(
   defineProps<{
@@ -67,6 +79,11 @@ const aba = computed(() => (route.path.startsWith('/resumo') ? 'resumo' : 'ativo
 function trocarAba(evento: CustomEvent<SegmentChangeEventDetail>) {
   const destino = evento.detail.value === 'resumo' ? '/resumo' : '/ativos';
   if (destino !== route.path) ionRouter.navigate(destino, 'root', 'replace');
+}
+
+async function sairDaConta() {
+  await sair();
+  ionRouter.navigate('/login', 'root', 'replace');
 }
 </script>
 
