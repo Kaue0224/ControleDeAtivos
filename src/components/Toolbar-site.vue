@@ -2,11 +2,12 @@
   <ion-page>
     <ion-header>
       <ion-toolbar color="light" mode="ios">
-        <ion-buttons slot="start" v-if="mostrarVoltar">
-          <ion-back-button :default-href="voltarPara" text=""></ion-back-button>
+        <ion-buttons slot="start">
+          <ion-menu-button :auto-hide="false" aria-label="Abrir menu"></ion-menu-button>
+          <ion-back-button v-if="mostrarVoltar" :default-href="voltarPara" text=""></ion-back-button>
         </ion-buttons>
 
-        <ion-title class="titulo" :class="{ 'com-voltar': mostrarVoltar }">
+        <ion-title class="titulo com-voltar">
           {{ titulo }}
         </ion-title>
 
@@ -51,6 +52,7 @@ import {
   IonLabel,
   IonButtons,
   IonBackButton,
+  IonMenuButton,
   IonButton,
   IonIcon,
   useIonRouter,
