@@ -7,6 +7,7 @@ Baixado) e o histórico de movimentações.
 Projeto acadêmico feito em grupo com **Ionic + Vue 3 + Capacitor**.
 
 **Integrantes:** Flavia, Guilherme, José, Kaue, Pedro, Rafael.
+
 ---
 
 ## Sumário
