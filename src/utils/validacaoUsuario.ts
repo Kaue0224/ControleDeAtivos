@@ -5,8 +5,17 @@ export interface FormularioLogin {
   senha: string;
 }
 
+export interface FormularioSenha {
+  atual: string;
+  nova: string;
+  confirmacao: string;
+}
+
 export type ErrosLogin = Partial<Record<keyof FormularioLogin, string>>;
 export type ErrosPerfil = Partial<Record<keyof DadosPerfil, string>>;
+export type ErrosSenha = Partial<Record<keyof FormularioSenha, string>>;
+
+export const TAMANHO_MINIMO_SENHA = 4;
 
 const FORMATO_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -33,6 +42,22 @@ export function validarPerfil(f: DadosPerfil): ErrosPerfil {
   else if (!FORMATO_EMAIL.test(email)) erros.email = 'Informe um e-mail válido.';
 
   if (!f.setor) erros.setor = 'Selecione o setor.';
+
+  return erros;
+}
+
+export function validarTrocaSenha(f: FormularioSenha): ErrosSenha {
+  const erros: ErrosSenha = {};
+
+  if (!f.atual) erros.atual = 'Informe a senha atual.';
+
+  if (!f.nova) erros.nova = 'Informe a nova senha.';
+  else if (f.nova.length < TAMANHO_MINIMO_SENHA) erros.nova = `Use pelo menos ${TAMANHO_MINIMO_SENHA} caracteres.`;
+  else if (/\s/.test(f.nova)) erros.nova = 'A senha não pode ter espaços.';
+  else if (f.atual && f.nova === f.atual) erros.nova = 'A nova senha deve ser diferente da atual.';
+
+  if (!f.confirmacao) erros.confirmacao = 'Confirme a nova senha.';
+  else if (f.nova && f.confirmacao !== f.nova) erros.confirmacao = 'As senhas não conferem.';
 
   return erros;
 }
