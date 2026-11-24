@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test } from 'vitest';
 
-import { entrar, estaLogado, sair, salvarPerfil, usuarioLogado } from '@/services/usuarios';
-import { paraPerfil, validarLogin, validarPerfil } from '@/utils/validacaoUsuario';
+import { alterarSenha, entrar, estaLogado, sair, salvarPerfil, usuarioLogado } from '@/services/usuarios';
+import { paraPerfil, validarLogin, validarPerfil, validarTrocaSenha } from '@/utils/validacaoUsuario';
 
 describe('validarLogin', () => {
   test('exige usuário e senha', () => {
@@ -12,7 +12,7 @@ describe('validarLogin', () => {
   });
 
   test('aceita campos preenchidos', () => {
-    expect(validarLogin({ login: 'admin', senha: '123' })).toEqual({});
+    expect(validarLogin({ login: 'admin', senha: '1234' })).toEqual({});
   });
 });
 
@@ -33,6 +33,32 @@ describe('validarPerfil', () => {
   });
 });
 
+describe('validarTrocaSenha', () => {
+  test('exige os três campos', () => {
+    expect(validarTrocaSenha({ atual: '', nova: '', confirmacao: '' })).toEqual({
+      atual: 'Informe a senha atual.',
+      nova: 'Informe a nova senha.',
+      confirmacao: 'Confirme a nova senha.',
+    });
+  });
+
+  test('recusa senha curta, igual à atual ou com confirmação diferente', () => {
+    expect(validarTrocaSenha({ atual: '1234', nova: '12', confirmacao: '12' }).nova).toBe(
+      'Use pelo menos 4 caracteres.',
+    );
+    expect(validarTrocaSenha({ atual: 'abcd', nova: 'abcd', confirmacao: 'abcd' }).nova).toBe(
+      'A nova senha deve ser diferente da atual.',
+    );
+    expect(validarTrocaSenha({ atual: '1234', nova: 'nova1', confirmacao: 'nova2' }).confirmacao).toBe(
+      'As senhas não conferem.',
+    );
+  });
+
+  test('aceita troca válida', () => {
+    expect(validarTrocaSenha({ atual: '1234', nova: 'nova123', confirmacao: 'nova123' })).toEqual({});
+  });
+});
+
 describe('service de usuários', () => {
   beforeEach(async () => {
     await sair();
@@ -44,7 +70,7 @@ describe('service de usuários', () => {
   });
 
   test('login, perfil salvo e logout', async () => {
-    const usuario = await entrar(' ADMIN ', '123');
+    const usuario = await entrar(' ADMIN ', '1234');
     expect(usuario.login).toBe('admin');
     expect(await estaLogado()).toBe(true);
 
@@ -57,7 +83,20 @@ describe('service de usuários', () => {
   });
 
   test('não salva perfil inválido', async () => {
-    await entrar('operador', '123');
+    await entrar('operador', '1234');
     await expect(salvarPerfil({ nome: '', email: 'x', setor: '' })).rejects.toThrow('Dados do perfil inválidos.');
+  });
+
+  test('troca de senha: exige a senha atual e o login passa a usar a nova', async () => {
+    await entrar('operador', '1234');
+    await expect(alterarSenha({ atual: 'errada', nova: 'nova123', confirmacao: 'nova123' })).rejects.toThrow(
+      'Senha atual incorreta.',
+    );
+
+    await alterarSenha({ atual: '1234', nova: 'nova123', confirmacao: 'nova123' });
+    await sair();
+
+    await expect(entrar('operador', '1234')).rejects.toThrow('Usuário ou senha incorretos.');
+    expect((await entrar('operador', 'nova123')).login).toBe('operador');
   });
 });
