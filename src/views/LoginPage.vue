@@ -47,7 +47,7 @@
             Entrar
           </ion-button>
 
-          <p class="ajuda">Usuário de teste: admin / 123</p>
+          <p class="ajuda">Usuário de teste: admin / 1234</p>
         </form>
       </div>
     </ion-content>

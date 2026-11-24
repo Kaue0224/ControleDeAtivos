@@ -1,6 +1,6 @@
 import { Preferences } from '@capacitor/preferences';
 
-import { paraPerfil, validarPerfil } from '@/utils/validacaoUsuario';
+import { paraPerfil, validarPerfil, validarTrocaSenha, type FormularioSenha } from '@/utils/validacaoUsuario';
 
 export interface DadosPerfil {
   nome: string;
@@ -19,14 +19,14 @@ interface Conta extends Usuario {
 const CONTAS: Conta[] = [
   {
     login: 'admin',
-    senha: '123',
+    senha: '1234',
     nome: 'Administrador do Sistema',
     email: 'admin@empresa.com',
     setor: 'TI · 3º andar',
   },
   {
     login: 'operador',
-    senha: '123',
+    senha: '1234',
     nome: 'Operador de Ativos',
     email: 'operador@empresa.com',
     setor: 'Almoxarifado',
@@ -35,6 +35,7 @@ const CONTAS: Conta[] = [
 
 const CHAVE_SESSAO = 'sessao';
 const chavePerfil = (login: string) => `perfil:${login}`;
+const chaveSenha = (login: string) => `senha:${login}`;
 
 let sessao: string | null | undefined;
 
@@ -49,6 +50,11 @@ async function lerSessao(): Promise<string | null> {
     sessao = value && buscarConta(value) ? value : null;
   }
   return sessao;
+}
+
+async function senhaDaConta(conta: Conta): Promise<string> {
+  const { value } = await Preferences.get({ key: chaveSenha(conta.login) });
+  return value ?? conta.senha;
 }
 
 async function carregarUsuario(conta: Conta): Promise<Usuario> {
@@ -75,7 +81,7 @@ export async function estaLogado(): Promise<boolean> {
 
 export async function entrar(login: string, senha: string): Promise<Usuario> {
   const conta = buscarConta(login);
-  if (!conta || conta.senha !== senha) {
+  if (!conta || (await senhaDaConta(conta)) !== senha) {
     throw new Error('Usuário ou senha incorretos.');
   }
   await Preferences.set({ key: CHAVE_SESSAO, value: conta.login });
@@ -105,4 +111,19 @@ export async function salvarPerfil(dados: DadosPerfil): Promise<Usuario> {
   const perfil = paraPerfil(dados);
   await Preferences.set({ key: chavePerfil(login), value: JSON.stringify(perfil) });
   return { login, ...perfil };
+}
+
+export async function alterarSenha(dados: FormularioSenha): Promise<void> {
+  const login = await lerSessao();
+  const conta = login ? buscarConta(login) : undefined;
+  if (!conta) {
+    throw new Error('Nenhum usuário logado.');
+  }
+  if (Object.keys(validarTrocaSenha(dados)).length > 0) {
+    throw new Error('Dados da senha inválidos.');
+  }
+  if ((await senhaDaConta(conta)) !== dados.atual) {
+    throw new Error('Senha atual incorreta.');
+  }
+  await Preferences.set({ key: chaveSenha(conta.login), value: dados.nova });
 }
